@@ -1,20 +1,26 @@
 import React from 'react'
 import { StyleSheet } from 'react-native'
 import * as Yup from 'yup'
-import CategoryPickerItem from '../components/CategoryPickerItem'
+
 import {
     AppForm,
     AppFormField,
     AppFormPicker,
     SubmitButton
 } from '../components/forms'
+import CategoryPickerItem from '../components/CategoryPickerItem'
+import FormImagePicker from '../components/forms/FormImagePicker'
 import Screen from '../components/Screen'
+import useLocation from '../hooks/useLocation'
+import listingsApi from '../api/listingsApi'
+import listings from '../../backend/data/listings'
 
 const validationSchema = Yup.object().shape({
     title: Yup.string().required().min(1).label('Title'),
     price: Yup.number().moreThan(1).lessThan(10000).label('Price'),
     description: Yup.string().label('Description'),
-    category: Yup.object().required().nullable().label('Category')
+    category: Yup.object().required().nullable().label('Category'),
+    images: Yup.array().min(1, "Please select at least one image.")
 })
 
 const categories = [
@@ -27,6 +33,16 @@ const categories = [
 ]
 
 const ListingEditScreen = () => {
+    const location = useLocation()
+
+    const handleSubmit = async (listing) => {
+        const result = await listingsApi.addListing({ ...listing, location })
+
+        if (!result.ok)
+            return alert('Could not save the listing.')
+        alert('Succcess')
+    }
+
     return (
         <Screen style={styles.container}>
             <AppForm
@@ -34,11 +50,13 @@ const ListingEditScreen = () => {
                     title: "",
                     price: "",
                     description: "",
-                    category: null
+                    category: null,
+                    images: []
                 }}
-                onSubmit={(values) => console.log(values)}
+                onSubmit={handleSubmit}
                 validationSchema={validationSchema}
             >
+                <FormImagePicker name="images" />
                 <AppFormField maxLength={255} name="title" placeholder="Title" />
                 <AppFormField maxLength={7} name="price" keyboardType="number-pad" placeholder="Price" />
                 <AppFormPicker
